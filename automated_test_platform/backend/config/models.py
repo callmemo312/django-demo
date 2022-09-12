@@ -1,4 +1,5 @@
 # Create your models here.
+from xml.dom.pulldom import default_bufsize
 from django.contrib.auth.models import User
 from django.db import models
 
@@ -10,53 +11,38 @@ class Link(models.Model):
         (STATUS_DELETE, '删除'),
     )
 
-    name = models.CharField(max_length=50, verbose_name='名称')
+    title = models.CharField(max_length=50, verbose_name='标题')
     status = models.PositiveIntegerField(default=STATUS_NORMAL, verbose_name='状态', choices=STATUS_ITEMS)
-    is_nav = models.BooleanField(default=False, verbose_name='是否为导航')
-    owner = models.ForeignKey(User, verbose_name='作者')
+    href = models.URLField(verbose_name='链接')
+    owner = models.ForeignKey(User, verbose_name='作者', on_delete=models.CASCADE)
+    weight = models.PositiveIntegerField(default=1, choices=zip(range(1, 6), range(1, 6)), verbose_name="权重", help_text="权重高展示顺序靠前")
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
 
     class Meta:
-        verbose_name = verbose_name_plural = '分类'
+        verbose_name = verbose_name_plural = '友链'
 
 
-class Tag(models.Model):
-    STATUS_NORMAL = 1
-    STATUS_DELETE = 0
+class SideBar(models.Model):
+    STATUS_SHOW = 1
+    STATUS_HIDE = 0
     STATUS_ITEMS = (
-        (STATUS_NORMAL, '正常'),
-        (STATUS_DELETE, '删除'),
-    )
-    name = models.CharField(max_length=50, verbose_name='名称')
-    status = models.PositiveIntegerField(default=STATUS_NORMAL, verbose_name='状态', choices=STATUS_ITEMS)
-    owner = models.ForeignKey(User, verbose_name='作者')
-    create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
-
-    class Meta:
-        verbose_name = verbose_name_plural = '标签'
-
-class Post(models.Model):
-    STATUS_NORMAL = 1
-    STATUS_DELETE = 0
-    STATUS_DRAFT = 2
-    STATUS_ITEMS = (
-        (STATUS_NORMAL, '正常'),
-        (STATUS_DELETE, '删除'),
-        (STATUS_DRAFT, '草稿'),
+        (STATUS_SHOW, '展示'),
+        (STATUS_HIDE, '隐藏'),
     )
 
-    title = models.CharField(max_length=255, verbose_name='标题')
-    desc = models.CharField(max_length=1024, blank=True, verbose_name='摘要')
-    content =models.TextField(verbose_name='正文', help_text='正文必须为markdown格式')
-    status = models.PositiveIntegerField(default=STATUS_NORMAL, verbose_name='状态', choices=STATUS_ITEMS)
-    category = models.ForeignKey(Category, verbose_name='分类')
-    tag = models.ManyToManyField(Tag, verbose_name='标签')
-    owner = models.ForeignKey(User, verbose_name='作者')
+    SIDE_TYPE = ( 
+        (1, "HTML"),
+        (2, "最新文章"),
+        (3, "最热文章"),
+        (4, "最近评论"),
+    )
+    title = models.CharField(max_length=50, verbose_name='标题')
+    status = models.PositiveIntegerField(default=STATUS_SHOW, verbose_name='状态', choices=STATUS_ITEMS)
+    display_type = models.PositiveIntegerField(default=1, choices=SIDE_TYPE, verbose_name="展示类型")
+    content = models.CharField(max_length=500, blank=True, verbose_name="内容", help_text="如果设置的不是HTML类型，可为空")
+    owner = models.ForeignKey(User, verbose_name='作者', on_delete=models.CASCADE)
     create_time = models.DateTimeField(auto_now_add=True, verbose_name='创建时间')
 
     class Meta:
-        verbose_name = verbose_name_plural = '文章'
-        ordering = ['-id'] #　根据ｉｄ降序
-
-
+        verbose_name = verbose_name_plural = '侧边栏'
 
